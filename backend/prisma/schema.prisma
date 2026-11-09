@@ -15,13 +15,17 @@ datasource db {
 enum UserRole {
   COMPANY_ADMIN
   COMPANY_MEMBER
+  MANAGER
+  EMPLOYEE
+  SUPER_ADMIN
 }
 
 model Company {
-  id        String   @id @default(uuid())
-  name      String
-  createdAt DateTime @default(now())
-  users     User[]
+  id          String       @id @default(uuid())
+  name        String
+  createdAt   DateTime     @default(now())
+  users       User[]
+  invitations Invitation[]
 
   @@map("companies")
 }
@@ -30,6 +34,8 @@ model User {
   id              String         @id @default(uuid())
   email           String         @unique
   passwordHash    String
+  firstName       String?
+  lastName        String?
   role            UserRole       @default(COMPANY_MEMBER)
   companyId       String
   company         Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
@@ -37,6 +43,7 @@ model User {
   emailVerifiedAt DateTime?
   createdAt       DateTime       @default(now())
   refreshTokens   RefreshToken[]
+  invitationsSent Invitation[]
 
   @@index([companyId])
   @@map("users")
@@ -53,4 +60,22 @@ model RefreshToken {
 
   @@index([userId, revokedAt])
   @@map("refresh_tokens")
+}
+
+model Invitation {
+  id          String    @id @default(uuid())
+  companyId   String
+  email       String
+  role        UserRole
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  invitedById String
+  createdAt   DateTime  @default(now())
+
+  company   Company @relation(fields: [companyId], references: [id])
+  invitedBy User    @relation(fields: [invitedById], references: [id])
+
+  @@index([companyId])
+  @@map("invitations")
 }

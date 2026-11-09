@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
-import { UserRole } from '../../../generated/prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { AccessTokenPayload, AuthUser } from '../auth.types';
 
@@ -20,6 +20,7 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
     private readonly reflector: Reflector,
+    private readonly prisma: PrismaService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -37,30 +38,38 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('A bearer access token is required');
     }
 
+    let payload: AccessTokenPayload;
     try {
-      const payload =
-        await this.jwtService.verifyAsync<AccessTokenPayload>(token);
-      if (
-        !payload.sub ||
-        !payload.companyId ||
-        !payload.email ||
-        !Object.values(UserRole).includes(payload.role)
-      ) {
-        throw new UnauthorizedException('Invalid access token');
-      }
-
-      request.user = {
-        id: payload.sub,
-        email: payload.email,
-        companyId: payload.companyId,
-        role: payload.role,
-      };
-      return true;
+      payload = await this.jwtService.verifyAsync<AccessTokenPayload>(token);
     } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
+      if (error instanceof UnauthorizedException) throw error;
       throw new UnauthorizedException('Invalid or expired access token');
     }
+
+    if (!payload.sub || !payload.companyId) {
+      throw new UnauthorizedException('Invalid access token');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: {
+        id: true,
+        email: true,
+        companyId: true,
+        role: true,
+        isActive: true,
+      },
+    });
+    if (!user?.isActive || user.companyId !== payload.companyId) {
+      throw new UnauthorizedException('Invalid or inactive user');
+    }
+
+    request.user = {
+      id: user.id,
+      email: user.email,
+      companyId: user.companyId,
+      role: user.role,
+    };
+    return true;
   }
 }

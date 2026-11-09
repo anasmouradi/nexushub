@@ -13,6 +13,7 @@ import { RegisterDto } from './dto/register.dto';
 import { AccessTokenPayload, AuthUser } from './auth.types';
 import { PrismaService } from '../prisma/prisma.service';
 import { REFRESH_TOKEN_TTL_MS } from './auth.constants';
+import { AcceptInviteDto } from './dto/accept-invite.dto';
 
 const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 
@@ -168,6 +169,62 @@ export class AuthService {
       where: { tokenHash: this.hashToken(rawToken), revokedAt: null },
       data: { revokedAt: new Date() },
     });
+  }
+
+  async acceptInvite(dto: AcceptInviteDto): Promise<AuthUser> {
+    if (Buffer.byteLength(dto.password, 'utf8') > 72) {
+      throw new BadRequestException('Password must not exceed 72 UTF-8 bytes');
+    }
+
+    const now = new Date();
+    const invitation = await this.prisma.invitation.findUnique({
+      where: { tokenHash: this.hashToken(dto.token) },
+    });
+    if (!invitation || invitation.acceptedAt || invitation.expiresAt <= now) {
+      throw new BadRequestException('Invitation is invalid or expired');
+    }
+    if (invitation.role === UserRole.SUPER_ADMIN) {
+      throw new BadRequestException('SUPER_ADMIN cannot be assigned');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.password, 12);
+    try {
+      return await this.prisma.$transaction(async (transaction) => {
+        const claimed = await transaction.invitation.updateMany({
+          where: {
+            id: invitation.id,
+            acceptedAt: null,
+            expiresAt: { gt: now },
+          },
+          data: { acceptedAt: now },
+        });
+        if (claimed.count !== 1) {
+          throw new BadRequestException('Invitation is invalid or expired');
+        }
+
+        return transaction.user.create({
+          data: {
+            email: invitation.email,
+            passwordHash,
+            firstName: dto.firstName.trim(),
+            lastName: dto.lastName.trim(),
+            role: invitation.role,
+            companyId: invitation.companyId,
+          },
+          select: { id: true, email: true, companyId: true, role: true },
+        });
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'An account with this email already exists',
+        );
+      }
+      throw error;
+    }
   }
 
   private async createSession(user: User): Promise<AuthTokens> {

@@ -18,6 +18,7 @@ import { Public } from './decorators/public.decorator';
 import type { AuthUser } from './auth.types';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { AcceptInviteDto } from './dto/accept-invite.dto';
 
 const REFRESH_COOKIE_PATH = '/api/auth';
 
@@ -34,6 +35,13 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   register(@Body() dto: RegisterDto): Promise<AuthUser> {
     return this.authService.register(dto);
+  }
+
+  @Public()
+  @Post('accept-invite')
+  @HttpCode(HttpStatus.CREATED)
+  acceptInvite(@Body() dto: AcceptInviteDto): Promise<AuthUser> {
+    return this.authService.acceptInvite(dto);
   }
 
   @Public()
