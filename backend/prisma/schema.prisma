@@ -12,10 +12,45 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserRole {
+  COMPANY_ADMIN
+  COMPANY_MEMBER
+}
+
 model Company {
   id        String   @id @default(uuid())
   name      String
   createdAt DateTime @default(now())
+  users     User[]
 
   @@map("companies")
+}
+
+model User {
+  id              String         @id @default(uuid())
+  email           String         @unique
+  passwordHash    String
+  role            UserRole       @default(COMPANY_MEMBER)
+  companyId       String
+  company         Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  isActive        Boolean        @default(true)
+  emailVerifiedAt DateTime?
+  createdAt       DateTime       @default(now())
+  refreshTokens   RefreshToken[]
+
+  @@index([companyId])
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, revokedAt])
+  @@map("refresh_tokens")
 }
