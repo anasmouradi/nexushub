@@ -26,6 +26,11 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Get('me')
+  findMe(@CurrentUser() user: AuthUser) {
+    return this.usersService.findOne(user.companyId, user.id);
+  }
+
   @Get()
   @Roles(UserRole.COMPANY_ADMIN, UserRole.MANAGER)
   findMany(@CurrentUser() user: AuthUser, @Query() query: ListUsersDto) {
