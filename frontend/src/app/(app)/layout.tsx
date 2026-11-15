@@ -38,6 +38,12 @@ export default function AppLayout({
           >
             Dashboard
           </Link>
+          <Link
+            href="/teams"
+            className="block rounded-md px-3 py-2 hover:bg-muted"
+          >
+            Équipes
+          </Link>
         </nav>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">

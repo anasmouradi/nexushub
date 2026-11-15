@@ -52,6 +52,18 @@ function isUserListResponse(
   );
 }
 
+function getId(value: unknown): string {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !('id' in value) ||
+    typeof value.id !== 'string'
+  ) {
+    throw new Error('Response did not contain a valid ID');
+  }
+  return value.id;
+}
+
 describe('Tenant isolation (e2e)', () => {
   let app: INestApplication<App>;
   let prisma: PrismaService;
@@ -109,6 +121,7 @@ describe('Tenant isolation (e2e)', () => {
       email: adminA.email,
       companyId: adminA.user.companyId,
     });
+
     expect(meBody).not.toHaveProperty('passwordHash');
 
     const profile = await request(app.getHttpServer())
@@ -168,6 +181,35 @@ describe('Tenant isolation (e2e)', () => {
       .delete(`/api/users/${adminA.user.id}`)
       .set('Authorization', `Bearer ${adminA.accessToken}`)
       .expect(400);
+  });
+
+  it('only reads and mutates teams in the authenticated company', async () => {
+    const teamResponse = await request(app.getHttpServer())
+      .post('/api/teams')
+      .set('Authorization', `Bearer ${adminB.accessToken}`)
+      .send({ name: `Tenant B team ${randomUUID()}` })
+      .expect(201);
+    const teamId = getId(teamResponse.body);
+
+    const list = await request(app.getHttpServer())
+      .get('/api/teams')
+      .set('Authorization', `Bearer ${adminA.accessToken}`)
+      .expect(200);
+    expect(list.body).toEqual([]);
+
+    await request(app.getHttpServer())
+      .get(`/api/teams/${teamId}`)
+      .set('Authorization', `Bearer ${adminA.accessToken}`)
+      .expect(404);
+    await request(app.getHttpServer())
+      .patch(`/api/teams/${teamId}`)
+      .set('Authorization', `Bearer ${adminA.accessToken}`)
+      .send({ name: 'Unauthorized' })
+      .expect(404);
+    await request(app.getHttpServer())
+      .delete(`/api/teams/${teamId}`)
+      .set('Authorization', `Bearer ${adminA.accessToken}`)
+      .expect(404);
   });
 
   it('restricts invitation creation and rejects expired invitations', async () => {

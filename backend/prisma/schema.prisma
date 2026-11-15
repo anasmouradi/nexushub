@@ -26,6 +26,7 @@ model Company {
   createdAt   DateTime     @default(now())
   users       User[]
   invitations Invitation[]
+  teams       Team[]
 
   @@map("companies")
 }
@@ -44,6 +45,8 @@ model User {
   createdAt       DateTime       @default(now())
   refreshTokens   RefreshToken[]
   invitationsSent Invitation[]
+  managedTeams    Team[]         @relation("TeamManager")
+  teamMemberships TeamMember[]
 
   @@index([companyId])
   @@map("users")
@@ -78,4 +81,35 @@ model Invitation {
 
   @@index([companyId])
   @@map("invitations")
+}
+
+model Team {
+  id          String   @id @default(uuid())
+  companyId   String
+  name        String
+  description String?
+  managerId   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company Company      @relation(fields: [companyId], references: [id])
+  manager User?        @relation("TeamManager", fields: [managerId], references: [id], onDelete: SetNull)
+  members TeamMember[]
+
+  @@unique([companyId, name])
+  @@index([companyId])
+  @@map("teams")
+}
+
+model TeamMember {
+  teamId   String
+  userId   String
+  joinedAt DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, userId])
+  @@index([userId])
+  @@map("team_members")
 }
