@@ -49,6 +49,7 @@ import {
   type Priority,
   type ProjectStatus,
 } from "@/lib/enums";
+import { useUrlSearch } from "@/lib/use-url-search";
 import { dateInputToIso, formatDate } from "@/lib/format";
 import { createProject, getProjects } from "@/lib/projects";
 import { getCompanyUsers, getTeams } from "@/lib/teams";
@@ -121,9 +122,16 @@ export default function ProjectsPage() {
   const { user } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const urlSearch = useUrlSearch();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState<ProjectStatus | "">("");
+  const [statusOverride, setStatusOverride] = useState<ProjectStatus | "" | null>(
+    null,
+  );
+  const queryStatus = new URLSearchParams(urlSearch).get("status") ?? "";
+  const status =
+    statusOverride ??
+    (isProjectStatus(queryStatus) ? queryStatus : "");
   const [priority, setPriority] = useState<Priority | "">("");
   const [search, setSearch] = useState("");
   const projectsQuery = useQuery({
@@ -236,7 +244,9 @@ export default function ProjectsPage() {
           label="Statut"
           value={status}
           onChange={(value) => {
-            setStatus(value === "" || isProjectStatus(value) ? value : "");
+            setStatusOverride(
+              value === "" || isProjectStatus(value) ? value : "",
+            );
             setPage(1);
           }}
         >

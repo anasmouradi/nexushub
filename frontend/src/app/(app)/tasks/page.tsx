@@ -23,6 +23,7 @@ import {
 } from "@/lib/enums";
 import { formatDate } from "@/lib/format";
 import { getTasks } from "@/lib/tasks";
+import { useUrlSearch } from "@/lib/use-url-search";
 
 function isTaskStatus(value: string): value is TaskStatus {
   return taskStatuses.some((status) => status === value);
@@ -38,8 +39,16 @@ function displayName(person: {
 }
 
 export default function MyTasksPage() {
-  const [status, setStatus] = useState<TaskStatus | "">("");
-  const [overdue, setOverdue] = useState(false);
+  const urlSearch = useUrlSearch();
+  const params = new URLSearchParams(urlSearch);
+  const queryStatus = params.get("status") ?? "";
+  const [statusOverride, setStatusOverride] = useState<
+    TaskStatus | "" | null
+  >(null);
+  const [overdueOverride, setOverdueOverride] = useState<boolean | null>(null);
+  const status =
+    statusOverride ?? (isTaskStatus(queryStatus) ? queryStatus : "");
+  const overdue = overdueOverride ?? params.get("overdue") === "true";
   const [now, setNow] = useState<number>();
   useEffect(() => {
     const timer = window.setTimeout(() => setNow(Date.now()), 0);
@@ -73,7 +82,7 @@ export default function MyTasksPage() {
             value={status}
             onChange={(event) => {
               const value = event.target.value;
-              setStatus(value === "" || isTaskStatus(value) ? value : "");
+              setStatusOverride(value === "" || isTaskStatus(value) ? value : "");
             }}
           >
             <option value="">Tous les statuts</option>
@@ -88,7 +97,7 @@ export default function MyTasksPage() {
           type="button"
           variant={overdue ? "default" : "outline"}
           aria-pressed={overdue}
-          onClick={() => setOverdue((value) => !value)}
+          onClick={() => setOverdueOverride((value) => !(value ?? overdue))}
         >
           En retard uniquement
         </Button>
