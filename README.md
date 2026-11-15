@@ -35,6 +35,17 @@ The frontend is at http://localhost:3000 and the API at
 http://localhost:4000/api. Set up `backend/.env` from
 [`backend/.env.example`](./backend/.env.example) if needed.
 
+## Demo data
+
+From the `backend` directory, run `pnpm seed` to create the local
+`NexusHub Demo` tenant with sample users, teams, projects, and tasks. The seed
+refuses to run when `NODE_ENV=production`.
+
+The demo administrator is `admin@demo.nexushub.local` with password
+`NexusHub-Demo-2026!`. Other accounts are `manager.dev@demo.nexushub.local`,
+`manager.design@demo.nexushub.local`, and `employee1` through `employee5` at
+the same domain; they share the demo password.
+
 ## Dashboard metrics
 
 `GET /api/dashboard` returns project and task KPIs and chart data for the
