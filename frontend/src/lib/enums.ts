@@ -49,3 +49,21 @@ export const priorityColors: Record<Priority, string> = {
   HIGH: "border-orange-300 bg-orange-100 text-orange-800",
   URGENT: "border-red-300 bg-red-100 text-red-800",
 };
+
+export const taskStatuses = ["TODO", "IN_PROGRESS", "REVIEW", "DONE"] as const;
+
+export type TaskStatus = (typeof taskStatuses)[number];
+
+export const taskStatusLabels: Record<TaskStatus, string> = {
+  TODO: "À faire",
+  IN_PROGRESS: "En cours",
+  REVIEW: "En revue",
+  DONE: "Terminée",
+};
+
+export const taskStatusColors: Record<TaskStatus, string> = {
+  TODO: "border-slate-300 bg-slate-100 text-slate-800",
+  IN_PROGRESS: "border-blue-300 bg-blue-100 text-blue-800",
+  REVIEW: "border-amber-300 bg-amber-100 text-amber-900",
+  DONE: "border-emerald-300 bg-emerald-100 text-emerald-800",
+};

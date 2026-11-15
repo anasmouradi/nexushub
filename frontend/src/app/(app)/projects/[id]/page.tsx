@@ -31,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/lib/auth";
 import {
   priorityColors,
@@ -48,6 +49,7 @@ import {
   updateProject,
 } from "@/lib/projects";
 import { getCompanyUsers } from "@/lib/teams";
+import { TaskBoard } from "@/components/tasks/task-board";
 
 function displayName(person: {
   firstName?: string | null;
@@ -211,6 +213,12 @@ export default function ProjectDetailPage() {
         </CardContent>
       </Card>
 
+      <Tabs defaultValue="tasks" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Aperçu</TabsTrigger>
+          <TabsTrigger value="tasks">Tâches</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview" className="space-y-6">
       <section className="space-y-4">
         <header className="flex items-center justify-between">
           <div>
@@ -331,20 +339,17 @@ export default function ProjectDetailPage() {
           </Table>
         </div>
       </section>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Tâches</CardTitle>
-          <CardDescription>
-            La gestion des tâches sera disponible au prochain sprint.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-            Aucune tâche pour le moment.
-          </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+        <TabsContent value="tasks">
+          <TaskBoard
+            projectId={projectId}
+            members={project.members.map((member) => member.user)}
+            currentUserId={user?.id ?? ""}
+            currentUserRole={user?.role ?? ""}
+            canManageProject={canManageProject}
+          />
+        </TabsContent>
+      </Tabs>
     </section>
   );
 }
