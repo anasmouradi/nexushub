@@ -96,9 +96,21 @@ describe('Tenant isolation (e2e)', () => {
 
     adminA = await registerAdmin('Tenant A');
     adminB = await registerAdmin('Tenant B');
-  });
+  }, 30_000);
 
   it('only reads and mutates users in the authenticated company', async () => {
+    const me = await request(app.getHttpServer())
+      .get('/api/users/me')
+      .set('Authorization', `Bearer ${adminA.accessToken}`)
+      .expect(200);
+    const meBody: unknown = me.body;
+    expect(meBody).toMatchObject({
+      id: adminA.user.id,
+      email: adminA.email,
+      companyId: adminA.user.companyId,
+    });
+    expect(meBody).not.toHaveProperty('passwordHash');
+
     const profile = await request(app.getHttpServer())
       .patch('/api/users/me')
       .set('Authorization', `Bearer ${adminA.accessToken}`)

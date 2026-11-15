@@ -16,6 +16,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 const USER_SELECT = {
   id: true,
   email: true,
+  companyId: true,
   firstName: true,
   lastName: true,
   role: true,
