@@ -50,6 +50,12 @@ export default function AppLayout({
           >
             Projets
           </Link>
+          <Link
+            href="/tasks"
+            className="block rounded-md px-3 py-2 hover:bg-muted"
+          >
+            Mes tâches
+          </Link>
         </nav>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">

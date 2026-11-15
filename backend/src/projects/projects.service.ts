@@ -7,6 +7,7 @@ import {
 import { Prisma, UserRole } from '../../generated/prisma/client';
 import type { AuthUser } from '../auth/auth.types';
 import { PrismaService } from '../prisma/prisma.service';
+import { ProjectAccessService } from './project-access.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { ListProjectsDto } from './dto/list-projects.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -55,36 +56,16 @@ type ProjectSummaryRecord = Prisma.ProjectGetPayload<{
 
 @Injectable()
 export class ProjectsService {
-  constructor(private readonly prisma: PrismaService) {}
-
-  visibleWhere(actor: AuthUser): Prisma.ProjectWhereInput {
-    const companyScope: Prisma.ProjectWhereInput = {
-      companyId: actor.companyId,
-    };
-
-    if (actor.role === UserRole.COMPANY_ADMIN) return companyScope;
-    if (actor.role === UserRole.MANAGER) {
-      return {
-        ...companyScope,
-        OR: [
-          { managerId: actor.id },
-          { createdById: actor.id },
-          { members: { some: { userId: actor.id } } },
-        ],
-      };
-    }
-
-    return {
-      ...companyScope,
-      members: { some: { userId: actor.id } },
-    };
-  }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly projectAccess: ProjectAccessService,
+  ) {}
 
   async findMany(actor: AuthUser, query: ListProjectsDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const where: Prisma.ProjectWhereInput = {
-      ...this.visibleWhere(actor),
+      ...this.projectAccess.visibleWhere(actor),
       ...(query.status && { status: query.status }),
       ...(query.priority && { priority: query.priority }),
       ...(query.teamId && { teamId: query.teamId }),
@@ -114,7 +95,7 @@ export class ProjectsService {
 
   async findOne(actor: AuthUser, id: string) {
     const project = await this.prisma.project.findFirst({
-      where: { id, ...this.visibleWhere(actor) },
+      where: { id, ...this.projectAccess.visibleWhere(actor) },
       select: {
         ...PROJECT_SELECT,
         members: {
