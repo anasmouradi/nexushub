@@ -28,6 +28,14 @@ export const projectStatusColors: Record<ProjectStatus, string> = {
   CANCELLED: "border-rose-300 bg-rose-100 text-rose-800",
 };
 
+export const projectStatusChartColors: Record<ProjectStatus, string> = {
+  PLANNING: "#64748b",
+  IN_PROGRESS: "#2563eb",
+  ON_HOLD: "#d97706",
+  COMPLETED: "#059669",
+  CANCELLED: "#e11d48",
+};
+
 export const priorities = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;
 
 export type Priority = (typeof priorities)[number];
@@ -50,6 +58,13 @@ export const priorityColors: Record<Priority, string> = {
   URGENT: "border-red-300 bg-red-100 text-red-800",
 };
 
+export const priorityChartColors: Record<Priority, string> = {
+  LOW: "#64748b",
+  MEDIUM: "#0284c7",
+  HIGH: "#ea580c",
+  URGENT: "#dc2626",
+};
+
 export const taskStatuses = ["TODO", "IN_PROGRESS", "REVIEW", "DONE"] as const;
 
 export type TaskStatus = (typeof taskStatuses)[number];
@@ -66,4 +81,11 @@ export const taskStatusColors: Record<TaskStatus, string> = {
   IN_PROGRESS: "border-blue-300 bg-blue-100 text-blue-800",
   REVIEW: "border-amber-300 bg-amber-100 text-amber-900",
   DONE: "border-emerald-300 bg-emerald-100 text-emerald-800",
+};
+
+export const taskStatusChartColors: Record<TaskStatus, string> = {
+  TODO: "#64748b",
+  IN_PROGRESS: "#2563eb",
+  REVIEW: "#d97706",
+  DONE: "#059669",
 };
