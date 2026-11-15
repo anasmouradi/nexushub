@@ -38,6 +38,7 @@ import {
   getTeam,
   removeTeamMember,
 } from "@/lib/teams";
+import { formatDate } from "@/lib/format";
 
 function displayName(person: {
   firstName?: string | null;
@@ -223,7 +224,7 @@ export default function TeamDetailPage() {
                     <Badge variant="outline">{member.role}</Badge>
                   </TableCell>
                   <TableCell>
-                    {new Date(joinedAt).toLocaleDateString("fr-FR")}
+                    {formatDate(joinedAt)}
                   </TableCell>
                   {canManageTeam && (
                     <TableCell className="text-right">
